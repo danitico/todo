@@ -30,6 +30,11 @@ class srcDevDebugProjectContainerUrlMatcher extends Symfony\Bundle\FrameworkBund
         }
 
 
+        // login
+        if ('/login' === $pathinfo) {
+            return array (  '_controller' => 'App\\Controller\\SecurityController::loginAction',  '_route' => 'login',);
+        }
+
         // task
         if ('' === $trimmedPathinfo) {
             $ret = array (  '_controller' => 'App\\Controller\\TaskController::index',  '_route' => 'task',);

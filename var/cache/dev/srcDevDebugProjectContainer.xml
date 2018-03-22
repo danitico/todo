@@ -522,6 +522,9 @@
     <service id="EasyCorp\EasyLog\EasyLogHandler" class="EasyCorp\EasyLog\EasyLogHandler" public="false">
       <argument>/home/daniel/Desktop/SEGUNDO_CARRERA/todo/var/log/dev.log</argument>
     </service>
+    <service id="App\Controller\SecurityController" class="App\Controller\SecurityController" public="true" autowire="true" autoconfigure="true">
+      <tag name="controller.service_arguments"/>
+    </service>
     <service id="App\Controller\TaskController" class="App\Controller\TaskController" public="true" autowire="true" autoconfigure="true">
       <tag name="controller.service_arguments"/>
     </service>
@@ -540,6 +543,9 @@
       <tag name="doctrine.repository_service"/>
       <argument type="service" id="doctrine"/>
     </service>
+    <service id="App\Security\Voter\TaskVoter" class="App\Security\Voter\TaskVoter" public="false" autowire="true" autoconfigure="true">
+      <tag name="security.voter"/>
+    </service>
     <service id="controller_name_converter" class="Symfony\Bundle\FrameworkBundle\Controller\ControllerNameParser" public="false">
       <tag name="monolog.logger" channel="request"/>
       <argument type="service" id="kernel"/>
@@ -556,7 +562,7 @@
     </service>
     <service id="argument_resolver.service" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver" public="false">
       <tag name="controller.argument_value_resolver" priority="-50"/>
-      <argument type="service" id="service_locator.rv6uq06"/>
+      <argument type="service" id="service_locator.mj6kdbk"/>
     </service>
     <service id="argument_resolver.default" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver" public="false">
       <tag name="controller.argument_value_resolver" priority="-100"/>
@@ -2940,6 +2946,13 @@
     </service>
     <service id="security.access_map" class="Symfony\Component\Security\Http\AccessMap" public="false">
       <call method="add">
+        <argument type="service" id="security.request_matcher.33jzefw"/>
+        <argument type="collection">
+          <argument>IS_AUTHENTICATED_ANONYMOUSLY</argument>
+        </argument>
+        <argument>null</argument>
+      </call>
+      <call method="add">
         <argument type="service" id="security.request_matcher.yk6k2aj"/>
         <argument type="collection">
           <argument>ROLE_ADMIN</argument>
@@ -3287,11 +3300,11 @@
       <argument>false</argument>
       <argument>security.user.provider.concrete.our_db_provider</argument>
       <argument>main</argument>
-      <argument>security.authentication.basic_entry_point.main</argument>
+      <argument>security.authentication.form_entry_point.main</argument>
       <argument>null</argument>
       <argument>null</argument>
       <argument type="collection">
-        <argument>http_basic</argument>
+        <argument>form_login</argument>
         <argument>anonymous</argument>
       </argument>
       <argument>null</argument>
@@ -3319,15 +3332,64 @@
       <argument type="service" id="security.encoder_factory.generic"/>
       <argument>true</argument>
     </service>
-    <service id="security.authentication.basic_entry_point.main" class="Symfony\Component\Security\Http\EntryPoint\BasicAuthenticationEntryPoint" public="false">
-      <argument>Secured Area</argument>
+    <service id="security.authentication.success_handler.main.form_login" class="Symfony\Component\Security\Http\Authentication\DefaultAuthenticationSuccessHandler" public="false">
+      <argument type="service" id="security.http_utils"/>
+      <argument type="collection"/>
+      <call method="setOptions">
+        <argument type="collection">
+          <argument key="login_path">login</argument>
+          <argument key="always_use_default_target_path">false</argument>
+          <argument key="default_target_path">/</argument>
+          <argument key="target_path_parameter">_target_path</argument>
+          <argument key="use_referer">false</argument>
+        </argument>
+      </call>
+      <call method="setProviderKey">
+        <argument>main</argument>
+      </call>
     </service>
-    <service id="security.authentication.listener.basic.main" class="Symfony\Component\Security\Http\Firewall\BasicAuthenticationListener" public="false">
+    <service id="security.authentication.failure_handler.main.form_login" class="Symfony\Component\Security\Http\Authentication\DefaultAuthenticationFailureHandler" public="false">
+      <argument type="service" id="http_kernel"/>
+      <argument type="service" id="security.http_utils"/>
+      <argument type="collection"/>
+      <argument type="service" id="monolog.logger.security" on-invalid="null"/>
+      <call method="setOptions">
+        <argument type="collection">
+          <argument key="login_path">login</argument>
+          <argument key="failure_path">null</argument>
+          <argument key="failure_forward">false</argument>
+          <argument key="failure_path_parameter">_failure_path</argument>
+        </argument>
+      </call>
+    </service>
+    <service id="security.authentication.listener.form.main" class="Symfony\Component\Security\Http\Firewall\UsernamePasswordFormAuthenticationListener" public="false">
+      <tag name="security.remember_me_aware" id="main" provider="security.user.provider.concrete.our_db_provider"/>
       <argument type="service" id="security.token_storage"/>
       <argument type="service" id="security.authentication.manager"/>
+      <argument type="service" id="security.authentication.session_strategy"/>
+      <argument type="service" id="security.http_utils"/>
       <argument>main</argument>
-      <argument type="service" id="security.authentication.basic_entry_point.main"/>
+      <argument type="service" id="security.authentication.success_handler.main.form_login"/>
+      <argument type="service" id="security.authentication.failure_handler.main.form_login"/>
+      <argument type="collection">
+        <argument key="check_path">login</argument>
+        <argument key="use_forward">false</argument>
+        <argument key="require_previous_session">false</argument>
+        <argument key="username_parameter">_username</argument>
+        <argument key="password_parameter">_password</argument>
+        <argument key="csrf_parameter">_csrf_token</argument>
+        <argument key="csrf_token_id">authenticate</argument>
+        <argument key="post_only">true</argument>
+      </argument>
       <argument type="service" id="monolog.logger.security" on-invalid="null"/>
+      <argument type="service" id="debug.event_dispatcher" on-invalid="null"/>
+      <argument>null</argument>
+    </service>
+    <service id="security.authentication.form_entry_point.main" class="Symfony\Component\Security\Http\EntryPoint\FormAuthenticationEntryPoint" public="false">
+      <argument type="service" id="http_kernel"/>
+      <argument type="service" id="security.http_utils"/>
+      <argument>login</argument>
+      <argument>false</argument>
     </service>
     <service id="security.authentication.listener.anonymous.main" class="Symfony\Component\Security\Http\Firewall\AnonymousAuthenticationListener" public="false">
       <argument type="service" id="security.token_storage"/>
@@ -3343,7 +3405,7 @@
       <argument type="service" id="security.authentication.trust_resolver"/>
       <argument type="service" id="security.http_utils"/>
       <argument>main</argument>
-      <argument type="service" id="security.authentication.basic_entry_point.main"/>
+      <argument type="service" id="security.authentication.form_entry_point.main"/>
       <argument>null</argument>
       <argument>null</argument>
       <argument type="service" id="monolog.logger.security" on-invalid="null"/>
@@ -3353,7 +3415,7 @@
       <argument type="iterator">
         <argument type="service" id="security.channel_listener"/>
         <argument type="service" id="security.context_listener.0"/>
-        <argument type="service" id="security.authentication.listener.basic.main"/>
+        <argument type="service" id="security.authentication.listener.form.main"/>
         <argument type="service" id="security.authentication.listener.anonymous.main"/>
         <argument type="service" id="security.access_listener"/>
       </argument>
@@ -3366,6 +3428,9 @@
         <argument key="security.firewall.map.context.dev" type="service" id="security.firewall.map.context.dev"/>
         <argument key="security.firewall.map.context.main" type="service" id="security.firewall.map.context.main"/>
       </argument>
+    </service>
+    <service id="security.request_matcher.33jzefw" class="Symfony\Component\HttpFoundation\RequestMatcher" public="false">
+      <argument>^/login</argument>
     </service>
     <service id="security.request_matcher.yk6k2aj" class="Symfony\Component\HttpFoundation\RequestMatcher" public="false">
       <argument>^/admin</argument>
@@ -4416,6 +4481,8 @@
         <argument>server:log</argument>
       </call>
     </service>
+    <service id="instanceof.Symfony\Bundle\FrameworkBundle\Controller\Controller.0.App\Controller\SecurityController" class="App\Controller\SecurityController" public="false" autowire="true" abstract="true"/>
+    <service id="abstract.instanceof.App\Controller\SecurityController" class="App\Controller\SecurityController" public="false" autowire="true" autoconfigure="true" abstract="true"/>
     <service id="instanceof.Symfony\Bundle\FrameworkBundle\Controller\Controller.0.App\Controller\TaskController" class="App\Controller\TaskController" public="false" autowire="true" abstract="true"/>
     <service id="abstract.instanceof.App\Controller\TaskController" class="App\Controller\TaskController" public="false" autowire="true" autoconfigure="true" abstract="true"/>
     <service id="instanceof.Doctrine\Bundle\FixturesBundle\ORMFixtureInterface.0.App\DataFixtures\AppFixtures" class="App\DataFixtures\AppFixtures" public="false" autowire="true" abstract="true"/>
@@ -4426,6 +4493,8 @@
     <service id="abstract.instanceof.App\Repository\TaskRepository" class="App\Repository\TaskRepository" public="false" autowire="true" autoconfigure="true" abstract="true"/>
     <service id="instanceof.Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface.0.App\Repository\UserRepository" class="App\Repository\UserRepository" public="false" autowire="true" abstract="true"/>
     <service id="abstract.instanceof.App\Repository\UserRepository" class="App\Repository\UserRepository" public="false" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id="instanceof.Symfony\Component\Security\Core\Authorization\Voter\VoterInterface.0.App\Security\Voter\TaskVoter" class="App\Security\Voter\TaskVoter" public="false" autowire="true" abstract="true"/>
+    <service id="abstract.instanceof.App\Security\Voter\TaskVoter" class="App\Security\Voter\TaskVoter" public="false" autowire="true" autoconfigure="true" abstract="true"/>
     <service id="maker.auto_command.make_auth" class="Symfony\Bundle\MakerBundle\Command\MakerCommand">
       <tag name="console.command" command="make:auth"/>
       <argument type="service" id="maker.maker.make_authenticator"/>
@@ -4538,6 +4607,12 @@
         <argument>make:migration</argument>
       </call>
     </service>
+    <service id="service_locator.kxaehkm" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="authenticationUtils" type="service" id="security.authentication_utils" on-invalid="ignore"/>
+      </argument>
+    </service>
     <service id="service_locator.rzne1by" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
       <tag name="container.service_locator"/>
       <argument type="collection">
@@ -4552,10 +4627,12 @@
       <tag name="container.service_locator"/>
       <argument type="collection"/>
     </service>
-    <service id="service_locator.rv6uq06" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
+    <service id="service_locator.mj6kdbk" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
       <tag name="container.service_locator"/>
       <argument type="collection">
+        <argument key="App\Controller\SecurityController:loginAction" type="service" id="service_locator.kxaehkm"/>
         <argument key="App\Controller\TaskController:index" type="service" id="service_locator.rzne1by"/>
+        <argument key="App\Controller\SecurityController::loginAction" type="service" id="service_locator.kxaehkm"/>
         <argument key="App\Controller\TaskController::index" type="service" id="service_locator.rzne1by"/>
       </argument>
     </service>
@@ -4863,6 +4940,7 @@
         <argument type="service" id="security.access.authenticated_voter"/>
         <argument type="service" id="security.access.simple_role_voter"/>
         <argument type="service" id="security.access.expression_voter"/>
+        <argument type="service" id="App\Security\Voter\TaskVoter"/>
       </argument>
       <argument>affirmative</argument>
       <argument>false</argument>

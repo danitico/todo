@@ -43,6 +43,8 @@ class Task
      * @var User
      * @ORM\ManyToOne(targetEntity="App\Entity\User")
      * @ORM\JoinColumn(nullable=false)
+     * @assert\NotBlank()
+     * @assert\Valid()
      */
     private $owner;
 
@@ -142,6 +144,4 @@ class Task
         $this->owner = $owner;
         return $this;
     }
-
-
 }

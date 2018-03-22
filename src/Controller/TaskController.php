@@ -33,7 +33,9 @@ class TaskController extends Controller
      */
     public function new(Request $request)
     {
+        $user = $this->getUser();
         $task = new Task();
+        $task->setOwner($user);
         $form = $this->createForm(TaskType::class, $task);
         $form->handleRequest($request);
 
@@ -57,6 +59,9 @@ class TaskController extends Controller
      */
     public function edit(Request $request, Task $task)
     {
+        $this->denyAccessUnlessGranted('EDIT', $task);
+
+
         $form = $this->createForm(TaskType::class, $task);
         $form->handleRequest($request);
 
@@ -75,25 +80,3 @@ class TaskController extends Controller
         ]);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
